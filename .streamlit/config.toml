@@ -1,0 +1,7 @@
+[theme]
+base = "light"
+primaryColor = "#D92D20"        # Cardio Red
+backgroundColor = "#F8F8F8"     # Light gray/white
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#1B1F3B"           # Navy text
+font = "sans serif"
