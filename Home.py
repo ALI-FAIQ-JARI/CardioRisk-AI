@@ -13,7 +13,7 @@ scaler = joblib.load("scaler.pkl")
 # Page setup
 st.set_page_config(page_title="CVD Risk Predictor", layout="centered")
 
-# ✅ Hide Streamlit header/footer when closed
+# Hide Streamlit header/footer
 HIDE_STREAMLIT_STYLE = """
     <style>
     #MainMenu {visibility: hidden;}
@@ -22,50 +22,36 @@ HIDE_STREAMLIT_STYLE = """
     .block-container {padding-top: 2rem;}
     </style>
 """
-
+st.markdown(HIDE_STREAMLIT_STYLE, unsafe_allow_html=True)
 
 # Display header image
 st.image("header_banner3.png", use_container_width=True)
 st.markdown("Enter the patient's clinical data to estimate cardiovascular risk.")
 st.markdown("### 🔢 Enter Patient Data")
 
-# Patient Name
+# Input fields
 name = st.text_input("Patient Name")
 
-# Input Fields
-pp = st.number_input("Pulse Pressure (mmHg)", min_value=0.0,
-    help="Difference between systolic and diastolic blood pressure. Normal range is 40–60 mmHg.")
+pp = st.number_input("Pulse Pressure (mmHg)", min_value=0.0)
 
 chol = st.selectbox("Cholesterol Level", [0, 1, 2],
-    format_func=lambda x: ["Normal", "Elevated", "High"][x],
-    help="Choose based on lab results: Normal (<200 mg/dL), Elevated (200–239), High (≥240)")
+    format_func=lambda x: ["Normal", "Elevated", "High"][x])
 
 smoking = st.selectbox("Smoking Status", [0, 1],
-    format_func=lambda x: "Non-Smoker" if x == 0 else "Smoker",
-    help="Indicate if the patient currently smokes tobacco.")
+    format_func=lambda x: "Non-Smoker" if x == 0 else "Smoker")
 
-bmi = st.number_input("BMI (kg/m²)", min_value=10.0, max_value=60.0,
-    help="Body Mass Index = weight (kg) / height² (m²). Normal: 18.5–24.9")
+bmi = st.number_input("BMI (kg/m²)", min_value=10.0, max_value=60.0)
 
 glucose = st.selectbox("Glucose Risk Category", [0, 1, 2],
-    format_func=lambda x: ["Normal", "Prediabetes", "Diabetes"][x],
-    help="Based on fasting glucose: Normal (<100 mg/dL), Prediabetes (100–125), Diabetes (≥126)")
+    format_func=lambda x: ["Normal", "Prediabetes", "Diabetes"][x])
 
-heart_rate_status = st.selectbox("Heart Rate Status", ["Bradycardia", "Normal", "Tachycardia"],
-    help="Select heart rate condition. Tachycardia = HR > 100 bpm.")
-
-# Convert to model input
+heart_rate_status = st.selectbox("Heart Rate Status", ["Bradycardia", "Normal", "Tachycardia"])
 hr_tachy = 1 if heart_rate_status == "Tachycardia" else 0
 
-# Enhanced PDF Report Generator
+# ✅ PDF Generator (No Emojis in PDF)
 def generate_pdf(name, features, classification, risk_zone_text, risk_color_rgb):
     pdf = FPDF()
     pdf.add_page()
-
-    # Load fonts
-    pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)
-    pdf.add_font("DejaVu", "B", "DejaVuSans-Bold.ttf", uni=True)
-    pdf.add_font("DejaVu", "I", "DejaVuSans-Oblique.ttf", uni=True)
 
     # Background color
     pdf.set_fill_color(248, 248, 248)
@@ -80,7 +66,7 @@ def generate_pdf(name, features, classification, risk_zone_text, risk_color_rgb)
     pdf.set_y(y_offset)
 
     # Title
-    pdf.set_font("DejaVu", "B", 16)
+    pdf.set_font("Arial", "B", 16)
     pdf.set_text_color(0, 51, 102)
     pdf.cell(0, 10, "Cardiovascular Risk Report", ln=True, align='C')
     pdf.set_draw_color(180)
@@ -88,24 +74,24 @@ def generate_pdf(name, features, classification, risk_zone_text, risk_color_rgb)
     pdf.ln(6)
 
     # Date
-    pdf.set_font("DejaVu", "", 11)
+    pdf.set_font("Arial", "", 11)
     pdf.set_text_color(0)
     pdf.cell(0, 8, f"Date: {datetime.now().strftime('%Y-%m-%d')}", ln=True)
     pdf.ln(5)
 
     # Patient Info
-    pdf.set_font("DejaVu", "B", 12)
+    pdf.set_font("Arial", "B", 12)
     pdf.set_fill_color(230, 230, 230)
-    pdf.cell(0, 9, "👤 Patient Information", ln=True, fill=True)
-    pdf.set_font("DejaVu", "", 12)
+    pdf.cell(0, 9, "Patient Information", ln=True, fill=True)
+    pdf.set_font("Arial", "", 12)
     pdf.cell(0, 9, f"Name: {name}", ln=True)
     pdf.ln(4)
 
     # Clinical Features
-    pdf.set_font("DejaVu", "B", 12)
+    pdf.set_font("Arial", "B", 12)
     pdf.set_fill_color(230, 230, 230)
-    pdf.cell(0, 9, "🩺 Clinical Features", ln=True, fill=True)
-    pdf.set_font("DejaVu", "", 12)
+    pdf.cell(0, 9, "Clinical Features", ln=True, fill=True)
+    pdf.set_font("Arial", "", 12)
     pdf.set_fill_color(255, 255, 255)
     pdf.set_draw_color(210, 210, 210)
     pdf.set_line_width(0.1)
@@ -115,26 +101,26 @@ def generate_pdf(name, features, classification, risk_zone_text, risk_color_rgb)
     pdf.ln(4)
 
     # Prediction Result
-    pdf.set_font("DejaVu", "B", 12)
+    pdf.set_font("Arial", "B", 12)
     pdf.set_fill_color(230, 230, 230)
-    pdf.cell(0, 9, "📊 Prediction Result", ln=True, fill=True)
+    pdf.cell(0, 9, "Prediction Result", ln=True, fill=True)
 
-    # Classification and Color Zone
+    # Classification and Risk Zone
     pdf.set_text_color(*risk_color_rgb)
-    pdf.set_font("DejaVu", "B", 12)
+    pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, f"Classification: {classification}", ln=True)
     pdf.cell(0, 10, f"Risk Zone: {risk_zone_text}", ln=True)
     pdf.set_text_color(0)
     pdf.ln(6)
 
-    # Signature line
-    pdf.set_font("DejaVu", "I", 10)
+    # Signature
+    pdf.set_font("Arial", "I", 10)
     pdf.set_text_color(100)
     pdf.cell(0, 8, "Signature (Doctor/Reviewer): __________________________", ln=True)
     pdf.ln(6)
 
     # Note
-    pdf.set_font("DejaVu", "I", 10)
+    pdf.set_font("Arial", "I", 10)
     pdf.set_text_color(90)
     pdf.multi_cell(0, 8, "Note: This report was generated by an AI-based tool for educational or screening purposes. Clinical confirmation is recommended.")
     pdf.ln(8)
@@ -145,19 +131,19 @@ def generate_pdf(name, features, classification, risk_zone_text, risk_color_rgb)
 
     pdf.set_y(-45)
     pdf.set_text_color(90)
-    pdf.set_font("DejaVu", "", 9)
+    pdf.set_font("Arial", "", 9)
     pdf.set_draw_color(200, 200, 200)
     pdf.line(10, pdf.get_y(), 200, pdf.get_y())
     pdf.ln(3)
     pdf.cell(0, 5, "This project was developed as part of a Master's thesis in Bioengineering.", ln=True, align="C")
     pdf.cell(0, 5, "Developer: Ali Faiq Jari", ln=True, align="C")
-    pdf.cell(0, 5, "Supervisor: Dr. Öğr. Üyesi Bora Büyüksaraç", ln=True, align="C")
+    pdf.cell(0, 5, "Supervisor: Dr. Ogr. Uyesi Bora Buyuksarac", ln=True, align="C")
 
     filename = f"{name.replace(' ', '_')}_CVD_Report.pdf"
     pdf.output(filename)
     return filename
 
-# Predict button
+# 🧠 Prediction + Report Generation
 if st.button("🔍 Predict CVD Risk"):
     input_data = np.array([[pp, chol, smoking, bmi, glucose, hr_tachy]])
     scaled_input = scaler.transform(input_data)
@@ -165,14 +151,16 @@ if st.button("🔍 Predict CVD Risk"):
 
     if prediction == 1:
         classification = "Positive (Class 1)"
-        risk_zone = "🔴 Red Zone"
+        risk_zone_ui = "🔴 Red Zone"
+        risk_zone_pdf = "Red Zone"
         risk_color = (204, 0, 0)
-        st.error(f"🔴 Classification: {classification}\n🧭 Risk Zone: {risk_zone}")
+        st.error(f"🔴 Classification: {classification}\n🧭 Risk Zone: {risk_zone_ui}")
     else:
         classification = "Negative (Class 0)"
-        risk_zone = "🟢 Green Zone"
+        risk_zone_ui = "🟢 Green Zone"
+        risk_zone_pdf = "Green Zone"
         risk_color = (0, 153, 0)
-        st.success(f"🟢 Classification: {classification}\n🧭 Risk Zone: {risk_zone}")
+        st.success(f"🟢 Classification: {classification}\n🧭 Risk Zone: {risk_zone_ui}")
 
     features = {
         "Pulse Pressure (mmHg)": pp,
@@ -183,7 +171,8 @@ if st.button("🔍 Predict CVD Risk"):
         "Heart Rate": heart_rate_status
     }
 
-    pdf_file = generate_pdf(name, features, classification, risk_zone, risk_color)
+    # Use risk_zone_pdf (no emoji) for PDF
+    pdf_file = generate_pdf(name, features, classification, risk_zone_pdf, risk_color)
     with open(pdf_file, "rb") as f:
         st.download_button(
             label="📥 Download PDF Report",
